@@ -1,0 +1,56 @@
+---
+apiVersion:             apps/v1
+kind:                   StatefulSet
+metadata:
+    name:               mariadb
+spec:
+    serviceName:        mariadb-service
+    replicas:           1
+    selector:
+        matchLabels:
+            app:        mariadb 
+    template:
+        metadata:
+            name:       mariadb-pod-template
+            labels:
+                app:    mariadb 
+        spec:
+            nodeSelector:
+                nodo: ivan
+            containers:
+                - name:         mariadb
+                  image:        mariadb:11.2
+                  env:
+                    - name:     MARIADB_ROOT_PASSWORD
+                      valueFrom:        
+                        secretKeyRef:
+                            name:   datos-secretos-bbdd
+                            key:    root-password
+                    - name:     MARIADB_USER
+                      valueFrom:        
+                        secretKeyRef:
+                            name:   datos-secretos-bbdd
+                            key:    user
+                    - name:     MARIADB_PASSWORD
+                      valueFrom:        
+                        secretKeyRef:
+                            name:   datos-secretos-bbdd
+                            key:    password
+                    - name:     MARIADB_DATABASE
+                      valueFrom:        
+                        configMapKeyRef:
+                            name:   datos-bbdd
+                            key:    nombre
+                  volumeMounts:
+                    - name:      pvc-mariadb
+                      mountPath: /var/lib/mysql
+    volumeClaimTemplates: 
+        -   metadata:
+                name:   pvc-mariadb
+            spec:
+                resources:
+                    requests: 
+                        storage: 1Gi # RARO ??? Tamaño por defecto
+                #storageClassName:  RARO... dejo el por defecto
+                accessModes:
+                    - ReadWriteOnce
